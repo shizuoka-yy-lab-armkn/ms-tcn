@@ -1,0 +1,13 @@
+.env
+tmp
+poetry.lock
+/data/
+/models/
+/results/
+
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.mypy_cache

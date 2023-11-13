@@ -1,0 +1,85 @@
+[tool.poetry]
+name = "ms-tcn"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+
+
+[[tool.poetry.source]]
+name = "torch_cu121"
+url = "https://download.pytorch.org/whl/cu121"
+priority = "explicit"
+
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+torch = [
+  {platform = "linux", version = "^2.0.1+cu121", source = "torch_cu121"},
+  {platform = "darwin", version = "^2.0.1", source = "pypi"},
+]
+torchvision = [
+  {platform = "linux", version = "^0.16.0+cu121", source = "torch_cu121"},
+  {platform = "darwin", version = "^0.16.0", source = "pypi"},
+]
+numpy = "^1.26.2"
+pandas = "^2.1.3"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.5"
+isort = "^5.12.0"
+black = "^23.11.0"
+pyright = "^1.1.335"
+ipython = "^8.17.2"
+matplotlib = "^3.8.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pyright]
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  "**/.*",
+  "tmp",
+  "data",
+  "models",
+  "results",
+]
+
+[tool.isort]
+profile = "black"
+extend_skip = [
+  "tmp", "data", "models", "results",
+]
+
+[tool.ruff]
+extend-exclude = [
+  "tmp", "data", "models", "results",
+]
+# see: https://docs.astral.sh/ruff/rules/
+select = [
+  "E",  # pycodestyle (Errors)
+  "W",  # pycodestyle (Warnings)
+  "F",  # pyflakes
+  "N",  # pep8-naming
+  "UP", # pyupgrade
+  "B",  # bugbear
+  "BLE", # flake8-blind-except
+  "FBT", # flake8-boolean-trap
+  "C4",  # flake8-comprehensions
+  "DTZ", # flake8-datetimez
+  "TCH", # flake8-type-checking
+  "SIM", # flake8-simplify
+]
+ignore = [
+  "ANN101", # missing-type-self
+  "N806",   # Variable in function should be lowercase
+  "N812",   # Lowercase `functional` imported as non-lowercase `F`
+  "SIM108", # Use ternary operator instead of `if`-`else`-block
+  "UP015",  # Unnecessary open mode parameters
+  "UP031",  # Use format specifiers instead of percent format
+]
