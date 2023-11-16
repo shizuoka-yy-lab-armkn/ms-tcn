@@ -37,10 +37,8 @@ sample_rate = 1
 if args.dataset == "50salads":
     sample_rate = 2
 elif args.dataset == "bike_students_blip2_A":
-    num_epochs = 70
     features_dim = 256
 elif args.dataset == "bike_students_imu_A":
-    num_epochs = 70
     features_dim = 18
 
 
