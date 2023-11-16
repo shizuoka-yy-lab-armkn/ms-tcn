@@ -36,15 +36,23 @@ sample_rate = 1
 # for 50salads, and up-sample the output to 30 fps
 if args.dataset == "50salads":
     sample_rate = 2
-elif args.dataset == "bike_students_blip2":
+elif args.dataset == "bike_students_blip2_A":
+    num_epochs = 70
     features_dim = 256
+elif args.dataset == "bike_students_imu_A":
+    num_epochs = 70
+    features_dim = 18
 
 
 DATA_DIR = Path("./data")
 assert DATA_DIR.exists()
 
-vid_train_list_file = DATA_DIR / args.dataset / "splits" / f"train.split{args.split}.bundle"
-vid_test_list_file = DATA_DIR / args.dataset / "splits" / f"test.split{args.split}.bundle"
+vid_train_list_file = (
+    DATA_DIR / args.dataset / "splits" / f"train.split{args.split}.bundle"
+)
+vid_test_list_file = (
+    DATA_DIR / args.dataset / "splits" / f"test.split{args.split}.bundle"
+)
 
 features_dir = DATA_DIR / args.dataset / "features"
 gt_dir = DATA_DIR / args.dataset / "groundTruth"
@@ -69,13 +77,18 @@ num_classes = len(action_name_to_id)
 
 trainer = Trainer(num_stages, num_layers, num_f_maps, features_dim, num_classes)
 if args.action == "train":
-    batch_gen = BatchGenerator(
+    batch_gen_train = BatchGenerator(
         num_classes, action_name_to_id, gt_dir, features_dir, sample_rate
     )
-    batch_gen.read_data(vid_train_list_file)
+    batch_gen_test = BatchGenerator(
+        num_classes, action_name_to_id, gt_dir, features_dir, sample_rate
+    )
+    batch_gen_train.read_data(vid_train_list_file)
+    batch_gen_test.read_data(vid_test_list_file)
     trainer.train(
         model_dir,
-        batch_gen,
+        batch_gen_train=batch_gen_train,
+        batch_gen_test=batch_gen_test,
         num_epochs=num_epochs,
         batch_size=bz,
         learning_rate=lr,

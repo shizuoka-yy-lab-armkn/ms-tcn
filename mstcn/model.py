@@ -73,21 +73,25 @@ class Trainer:
     def train(
         self,
         save_dir: Path,
-        batch_gen: BatchGenerator,
+        *,
+        batch_gen_train: BatchGenerator,
+        batch_gen_test: BatchGenerator,
         num_epochs: int,
         batch_size: int,
         learning_rate: float,
         device: torch.device,
     ):
-        self.model.train()
         self.model.to(device)
+
         optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+
         for epoch in range(num_epochs):
-            epoch_loss = 0
-            correct = 0
-            total = 0
-            while batch_gen.has_next():
-                batch_input, batch_target, mask = batch_gen.next_batch(batch_size)
+            self.model.train()
+            train_epoch_loss = 0
+            train_correct = 0
+            train_total = 0
+            while batch_gen_train.has_next():
+                batch_input, batch_target, mask = batch_gen_train.next_batch(batch_size)
                 batch_input, batch_target, mask = (
                     batch_input.to(device),
                     batch_target.to(device),
@@ -114,27 +118,76 @@ class Trainer:
                         * mask[:, :, 1:]
                     )
 
-                epoch_loss += loss.item()
+                train_epoch_loss += loss.item()
                 loss.backward()
                 optimizer.step()
 
                 _, predicted = torch.max(predictions[-1].data, 1)
-                correct += (
+                train_correct += (
                     ((predicted == batch_target).float() * mask[:, 0, :].squeeze(1))
                     .sum()
                     .item()
                 )
-                total += torch.sum(mask[:, 0, :]).item()
+                train_total += torch.sum(mask[:, 0, :]).item()
 
-            batch_gen.reset()
+            batch_gen_train.reset()
             torch.save(self.model.state_dict(), save_dir / f"epoch-{epoch + 1}.model")
             torch.save(optimizer.state_dict(), save_dir / f"epoch-{epoch + 1}.opt")
+
+            self.model.eval()
+            test_epoch_loss = 0
+            test_correct = 0
+            test_total = 0
+            with torch.no_grad():
+                while batch_gen_test.has_next():
+                    batch_input, batch_target, mask = batch_gen_test.next_batch(
+                        batch_size
+                    )
+                    batch_input, batch_target, mask = (
+                        batch_input.to(device),
+                        batch_target.to(device),
+                        mask.to(device),
+                    )
+                    predictions = self.model(batch_input, mask)
+
+                    loss = torch.tensor(0.0, device=device)
+                    for p in predictions:
+                        loss += self.ce(
+                            p.transpose(2, 1).contiguous().view(-1, self.num_classes),
+                            batch_target.view(-1),
+                        )
+                        loss += 0.15 * torch.mean(
+                            torch.clamp(
+                                self.mse(
+                                    F.log_softmax(p[:, :, 1:], dim=1),
+                                    F.log_softmax(p.detach()[:, :, :-1], dim=1),
+                                ),
+                                min=0,
+                                max=16,
+                            )
+                            * mask[:, :, 1:]
+                        )
+
+                    test_epoch_loss += loss.item()
+
+                    _, predicted = torch.max(predictions[-1].data, 1)
+                    test_correct += (
+                        ((predicted == batch_target).float() * mask[:, 0, :].squeeze(1))
+                        .sum()
+                        .item()
+                    )
+                    test_total += torch.sum(mask[:, 0, :]).item()
+
+                batch_gen_test.reset()
+
             print(
-                "[epoch %d]: epoch loss = %f,   acc = %f"
+                "[epoch %03d]: trainLoss=%.4f, trainAcc=%.4f ;; testLoss=%.4f, testAcc=%.4f"
                 % (
                     epoch + 1,
-                    epoch_loss / len(batch_gen.list_of_examples),
-                    float(correct) / total,
+                    train_epoch_loss / len(batch_gen_train.list_of_examples),
+                    train_correct / train_total,
+                    test_epoch_loss / len(batch_gen_test.list_of_examples),
+                    test_correct / test_total,
                 )
             )
 
