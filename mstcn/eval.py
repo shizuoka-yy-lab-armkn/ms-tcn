@@ -1,6 +1,7 @@
 # adapted from: https://github.com/colincsl/TemporalConvolutionalNetworks/blob/master/code/metrics.py
 
 import argparse
+from pathlib import Path
 from typing import Sequence
 
 import numpy as np
@@ -10,6 +11,11 @@ def read_file(path):
     with open(path, "r") as f:
         content = f.read()
     return content
+
+
+def read_lines_stripped(path: str | Path):
+    with open(path) as f:
+        return [line.strip() for line in f]
 
 
 def get_labels_start_end_time(
@@ -124,10 +130,12 @@ def main():
 
     for vid in list_of_videos:
         gt_file = ground_truth_path + vid
-        gt_content = read_file(gt_file).split("\n")[0:-1]
+        gt_content = read_lines_stripped(gt_file)
 
-        recog_file = recog_path + vid.split(".")[0]
-        recog_content = read_file(recog_file).split("\n")[1].split()
+        recog_file = recog_path + vid
+        recog_content = read_lines_stripped(recog_file)
+
+        assert len(gt_content) == len(recog_content)
 
         for i in range(len(gt_content)):
             total += 1

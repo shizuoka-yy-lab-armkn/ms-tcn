@@ -201,7 +201,7 @@ class Trainer:
         actions_dict: dict[str, int],
         device: torch.device,
         sample_rate: int,
-    ):
+    ) -> None:
         self.model.eval()
         actions_dict_inv = {
             act_id: act_name for act_name, act_id in actions_dict.items()
@@ -233,7 +233,7 @@ class Trainer:
                             [actions_dict_inv[int(predicted[i].item())]] * sample_rate,
                         )
                     )
-                f_name = vid.split("/")[-1].split(".")[0]
+                f_name = Path(vid).stem + ".txt"
                 with open(results_dir / f_name, "w") as f:
-                    f.write("### Frame level recognition: ###\n")
-                    f.write(" ".join(recognition))
+                    f.write("\n".join(recognition))
+                    f.write("\n")
