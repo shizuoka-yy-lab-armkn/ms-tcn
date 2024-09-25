@@ -1,15 +1,10 @@
 OS := $(shell uname -s)
 
 
-.PHONY:	setup
-setup:
-	ln -sf poetry.$(OS).lock poetry.lock
-
-
 .PHONY:	install
 install:
-	poetry lock --no-update
-	poetry install
+	ln -sf poetry.$(OS).lock poetry.lock
+	poetry install --no-root
 
 
 .PHONY:	fmt
