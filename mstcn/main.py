@@ -25,10 +25,10 @@ args = parser.parse_args()
 num_stages = 4
 num_layers = 10
 num_f_maps = 64
-features_dim = 2048
+features_dim = 256
 bz = 1
 lr = 0.0005
-num_epochs = 50
+num_epochs = 90
 
 # use the full temporal resolution @ 15fps
 sample_rate = 1
@@ -36,8 +36,6 @@ sample_rate = 1
 # for 50salads, and up-sample the output to 30 fps
 if args.dataset == "50salads":
     sample_rate = 2
-elif args.dataset == "bike_students_blip2":
-    features_dim = 256
 
 
 DATA_DIR = Path("./data")
